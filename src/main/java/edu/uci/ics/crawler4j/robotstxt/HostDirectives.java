@@ -26,8 +26,13 @@ public class HostDirectives {
 	// 24 hours, we have to re-fetch it.
 	private static final long EXPIRATION_DELAY = 24 * 60 * 1000L;
 
+    private static final long DEFAULT_CRAWL_DELAY = 0; // No directive means no limit as far as robots parsing is concerned.
+
 	private RuleSet disallows = new RuleSet();
 	private RuleSet allows = new RuleSet();
+
+    private long crawlDelay = DEFAULT_CRAWL_DELAY;
+    private volatile Long nextAllowedCrawl = System.currentTimeMillis();
 
 	private long timeFetched;
 	private long timeLastAccessed;
@@ -56,4 +61,33 @@ public class HostDirectives {
 	public long getLastAccessTime() {
 		return timeLastAccessed;
 	}
+
+    public void setCrawlDelay(long crawlDelayMs) {
+        this.crawlDelay = crawlDelayMs;
+    }
+
+    /**
+     * Gets suggested wait time before next crawl. Invoking this method assumes that a crawl will be scheduled at the
+     * suggested delay and makes an internal note when, if asked again, the next delay should be, which is based on
+     * the value set by {@link #setCrawlDelay(long)}.
+     * <p/>
+     * Example: This is a fresh instance with crawl delay of 5 seconds. 4 requests to this method are made
+     * simultaneously. The returned values should be 0ms, 5000ms, 10000ms, and 15000ms .
+     *
+     * @return gets the suggested delay before the next crawl to this domain, 0 if no delay is necessary
+     */
+    public long getDelayUntilNextAllowedCrawl() {
+        long delay;
+        synchronized (nextAllowedCrawl) {
+            long currentTime = System.currentTimeMillis();
+            if (currentTime < nextAllowedCrawl) {
+                delay = nextAllowedCrawl - currentTime;
+                nextAllowedCrawl += crawlDelay;
+            } else {
+                delay = 0L;
+                nextAllowedCrawl = currentTime + crawlDelay;
+            }
+        }
+        return delay;
+    }
 }

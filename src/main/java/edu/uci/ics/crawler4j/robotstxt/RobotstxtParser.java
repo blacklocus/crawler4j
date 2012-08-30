@@ -17,23 +17,31 @@
 
 package edu.uci.ics.crawler4j.robotstxt;
 
+import org.apache.log4j.Logger;
+
 import java.util.StringTokenizer;
 
 /**
+ * @author dirkraft
  * @author Yasser Ganjisaffar <lastname at gmail dot com>
  */
 
-
 public class RobotstxtParser {
+
+    private static final Logger logger = Logger.getLogger(RobotstxtParser.class);
 
 	private static final String PATTERNS_USERAGENT = "(?i)^User-agent:.*";
 	private static final String PATTERNS_DISALLOW = "(?i)Disallow:.*";
 	private static final String PATTERNS_ALLOW = "(?i)Allow:.*";
+    private static final String PATTERNS_CRAWL_DELAY = "(?i)Crawl-delay:.*";
 	
 	private static final int PATTERNS_USERAGENT_LENGTH = 11;
 	private static final int PATTERNS_DISALLOW_LENGTH = 9;
 	private static final int PATTERNS_ALLOW_LENGTH = 6;
-	
+	private static final int PATTERNS_CRAWL_DELAY_LENGTH = 12;
+
+    private static final int DEFAULT_CRAWL_DELAY_MS = 10 * 1000;
+
 	public static HostDirectives parse(String content, String myUserAgent) {
 		
 		HostDirectives directives = null;
@@ -89,7 +97,20 @@ public class RobotstxtParser {
 				}
 				path = path.trim();
 				directives.addAllow(path);
-			}			
+            } else if (line.matches(PATTERNS_CRAWL_DELAY)) {
+                if (!inMatchingUserAgent) {
+                    continue;
+                }
+                String crawlDelayStr = line.substring(PATTERNS_CRAWL_DELAY_LENGTH).trim();
+                Integer crawlDelayMs = DEFAULT_CRAWL_DELAY_MS; // if directive present, be generous to 10 seconds
+                try {
+                    Integer.valueOf(crawlDelayStr);
+                } catch (NumberFormatException e) {
+                    logger.error(String.format("Unable to parse crawl-delay even though it was present. " +
+                            "Defaulting to %d seconds. Line read  %s", DEFAULT_CRAWL_DELAY_MS, line));
+                }
+                directives.setCrawlDelay(crawlDelayMs);
+            }
 		}
 		
 		return directives;
