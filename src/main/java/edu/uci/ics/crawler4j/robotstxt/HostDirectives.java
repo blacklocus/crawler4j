@@ -26,12 +26,12 @@ public class HostDirectives {
 	// 24 hours, we have to re-fetch it.
 	private static final long EXPIRATION_DELAY = 24 * 60 * 1000L;
 
-    private static final long DEFAULT_CRAWL_DELAY = 0; // No directive means no limit as far as robots parsing is concerned.
+    private static final Long DEFAULT_CRAWL_DELAY = 0L; // No directive means no limit as far as robots parsing is concerned.
 
 	private RuleSet disallows = new RuleSet();
 	private RuleSet allows = new RuleSet();
 
-    private long crawlDelay = DEFAULT_CRAWL_DELAY;
+    private Long crawlDelay = null;
     private volatile Long nextAllowedCrawl = System.currentTimeMillis();
 
 	private long timeFetched;
@@ -45,12 +45,26 @@ public class HostDirectives {
 		return (System.currentTimeMillis() - timeFetched > EXPIRATION_DELAY);
 	}
 
-	public boolean allows(String path) {
-		timeLastAccessed = System.currentTimeMillis();
-        return !disallows.containsPrefixOf(path) || allows.containsPrefixOf(path);
+    /**
+     * For 'Crawl-delay' directives, calling this method will increment the time delay counter, regardless of whether
+     * or not a subsequent fetch of the given url actually happens. i.e. only call this method once per url being
+     * checked for fetch-ability.
+     *
+     * @param path
+     * @return <code>null</code> if the path is never allowed. Otherwise a suggested delay in ms. In the case there
+     *         was no 'Crawl-delay' directive parsed from the robots.txt, allowed paths will always return a suggested delay
+     *         of 0ms.
+     */
+    public Long allowedIn(String path) {
+        timeLastAccessed = System.currentTimeMillis();
+        if (!disallows.containsPrefixOf(path) || allows.containsPrefixOf(path)) {
+            return getDelayUntilNextAllowedCrawl(); // allowed after perhaps a non-0 suggested delay
+        } else {
+            return null; // never allowed
+        }
     }
 
-	public void addDisallow(String path) {
+    public void addDisallow(String path) {
 		disallows.add(path);
 	}
 
@@ -77,15 +91,18 @@ public class HostDirectives {
      * @return gets the suggested delay before the next crawl to this domain, 0 if no delay is necessary
      */
     public long getDelayUntilNextAllowedCrawl() {
-        long delay;
-        synchronized (nextAllowedCrawl) {
-            long currentTime = System.currentTimeMillis();
-            if (currentTime < nextAllowedCrawl) {
-                delay = nextAllowedCrawl - currentTime;
-                nextAllowedCrawl += crawlDelay;
-            } else {
-                delay = 0L;
-                nextAllowedCrawl = currentTime + crawlDelay;
+        long delay = DEFAULT_CRAWL_DELAY;
+        // Bypass crawl delay aggregation if no such directive was parsed.
+        if (crawlDelay != null) {
+            synchronized (nextAllowedCrawl) {
+                long currentTime = System.currentTimeMillis();
+                if (currentTime < nextAllowedCrawl) {
+                    delay = nextAllowedCrawl - currentTime;
+                    nextAllowedCrawl += crawlDelay;
+                } else {
+                    delay = 0L;
+                    nextAllowedCrawl = currentTime + crawlDelay;
+                }
             }
         }
         return delay;
