@@ -1,12 +1,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>edu.uci.ics</groupId>
+	<groupId>com.github.dirkraft</groupId>
 	<artifactId>crawler4j</artifactId>
 	<packaging>jar</packaging>
 	<name>crawler4j</name>
-	<version>3.3.2-SNAPSHOT</version>
+	<version>3.3.3-SNAPSHOT</version>
 	<description>Open Source Web Crawler for Java</description>
-	<url>http://code.google.com/p/crawler4j/</url>
+	<url>https://github.com/dirkraft/crawler4j</url>
+
 	<licenses>
 		<license>
 			<name>The Apache Software License, Version 2.0</name>
@@ -14,18 +15,23 @@
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
-	<scm>
-		<connection>scm:git:https://crawler4j.googlecode.com/git/</connection>
-		<developerConnection>scm:git:https://crawler4j.googlecode.com/git/</developerConnection>
-		<url>https://crawler4j.googlecode.com/git/</url>
-	</scm>
-	<developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/dirkraft/crawler4j.git</connection>
+        <developerConnection>scm:git:git@github.com:dirkraft/crawler4j.git</developerConnection>
+        <url>https://github.com/dirkraft/crawler4j</url>
+    </scm>
+
+    <developers>
+        <developer>
+            <name>Jason Dunkelberger</name>
+        </developer>
 		<developer>
 			<name>Yasser Ganjisaffar</name>
 			<email>{lastname}@gmail.com</email>
 		</developer>
 	</developers>
-	
+
 	<parent>
 		<groupId>org.sonatype.oss</groupId>
 		<artifactId>oss-parent</artifactId>
@@ -52,7 +58,7 @@
 						<exclude>**/*.properties</exclude>
 					</excludes>
 				</configuration>
-			</plugin>			
+			</plugin>
 		</plugins>
 	</build>
 
@@ -150,14 +156,5 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-
-	<repositories>
-		<repository>
-			<id>oracleReleases</id>
-			<name>Oracle Released Java Packages</name>
-			<url>http://download.oracle.com/maven</url>
-			<layout>default</layout>
-		</repository>
-	</repositories>	
 
 </project>

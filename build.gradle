@@ -1,0 +1,67 @@
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'maven'
+
+group = "com.github.dirkraft"
+version = "3.3.3-SNAPSHOT"
+
+repositories {
+    mavenCentral()
+}
+
+configurations {
+    all {
+        resolutionStrategy.cacheChangingModulesFor(0, "seconds")
+    }
+    compile {
+        description = 'compile classpath'
+    }
+    runtime {
+        extendsFrom compile
+    }
+    deployerJars
+}
+
+jar {
+    enabled = true
+
+    manifest {
+        // empty
+    }
+
+    baseName = 'crawler4j'
+}
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+artifacts {
+    archives sourcesJar
+}
+
+dependencies {
+    compile "log4j:log4j:1.2.14"
+    compile "commons-logging:commons-logging:1.1.1"
+    compile "commons-codec:commons-codec:1.5"
+
+    compile "org.apache.httpcomponents:httpclient:4.1.2"
+    compile "org.apache.httpcomponents:httpcore:4.1.2"
+    compile ("org.apache.tika:tika-parsers:1.0") {
+        exclude group: "org.apache.poi", module: "poi"
+        exclude group: "org.apache.poi", module: "poi-ooxml"
+        exclude group: "org.apache.poi", module: "poi-ooxml-schemas"
+        exclude group: "org.apache.poi", module: "poi-scratchpad"
+        exclude group: "org.apache.pdfbox", module: "fontbox"
+        exclude group: "edu.ucar", module: "netcdf"
+        exclude group: "jdom", module: "jdom"
+        exclude group: "rome", module: "rome"
+        exclude group: "org.bouncycastle", module: "bcmail-jdk15"
+        exclude group: "org.bouncycastle", module: "bcprov-jdk15"
+    }
+
+    compile "com.sleepycat:je:4.0.92"
+
+    testCompile "junit:junit:4.10"
+}

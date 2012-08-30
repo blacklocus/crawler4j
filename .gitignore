@@ -3,3 +3,5 @@ target/*
 *.iml
 .settings/*
 javadocs/*
+build/*
+.gradle/*

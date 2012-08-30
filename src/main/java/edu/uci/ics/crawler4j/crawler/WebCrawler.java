@@ -250,7 +250,9 @@ public class WebCrawler implements Runnable {
 							webURL.setParentUrl(curURL.getParentUrl());
 							webURL.setDepth(curURL.getDepth());
 							webURL.setDocid(-1);
-							if (shouldVisit(webURL) && robotstxtServer.allows(webURL)) {
+                            // TODO This only proceeds if the tracked Crawl-delay comes back as 0 (instantly ok to fetch)
+                            // Need to augment scheduling logic to delay fetches into a time-based priority queue, or some such
+                            if (shouldVisit(webURL) && robotstxtServer.allowedIn(webURL) == 0L) {
 								webURL.setDocid(docIdServer.getNewDocID(movedToUrl));
 								frontier.schedule(webURL);
 							}
@@ -294,7 +296,9 @@ public class WebCrawler implements Runnable {
 							webURL.setDocid(-1);
 							webURL.setDepth((short) (curURL.getDepth() + 1));
 							if (maxCrawlDepth == -1 || curURL.getDepth() < maxCrawlDepth) {
-								if (shouldVisit(webURL) && robotstxtServer.allows(webURL)) {
+                                // TODO This only proceeds if the tracked Crawl-delay comes back as 0 (instantly ok to fetch)
+                                // Need to augment scheduling logic to delay fetches into a time-based priority queue, or some such
+								if (shouldVisit(webURL) && robotstxtServer.allowedIn(webURL) == 0L) {
 									webURL.setDocid(docIdServer.getNewDocID(webURL.getURL()));
 									toSchedule.add(webURL);
 								}

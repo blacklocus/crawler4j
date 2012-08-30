@@ -347,7 +347,7 @@ public class CrawlController extends Configurable {
 		webUrl.setURL(canonicalUrl);
 		webUrl.setDocid(docId);
 		webUrl.setDepth((short) 0);
-		if (!robotstxtServer.allows(webUrl)) {
+		if (robotstxtServer.allowedIn(webUrl) == null) {
 			logger.info("Robots.txt does not allow this seed: " + pageUrl);
 		} else {
 			frontier.schedule(webUrl);
@@ -364,7 +364,7 @@ public class CrawlController extends Configurable {
 	 * the next URL that is found during the crawl will get a doc id of 8. Also
 	 * you need to ensure to add seen Urls in increasing order of document ids. 
 	 * 
-	 * @param pageUrl
+	 * @param url
 	 *            the URL of the page
 	 * @param docId
 	 *            the document id that you want to be assigned to this URL.

@@ -30,33 +30,57 @@ import edu.uci.ics.crawler4j.fetcher.PageFetchResult;
 import edu.uci.ics.crawler4j.fetcher.PageFetcher;
 import edu.uci.ics.crawler4j.url.WebURL;
 import edu.uci.ics.crawler4j.util.Util;
+import org.apache.log4j.Logger;
 
 /**
  * @author Yasser Ganjisaffar <lastname at gmail dot com>
  */
 public class RobotstxtServer {
 
+    private static final Logger logger = Logger.getLogger(RobotstxtServer.class);
+
 	protected RobotstxtConfig config;
 
-	protected final Map<String, HostDirectives> host2directivesCache = new HashMap<String, HostDirectives>();
+	protected final Map<String, HostDirectives> host2directivesCache;
 
 	protected PageFetcher pageFetcher;
 
 	public RobotstxtServer(RobotstxtConfig config, PageFetcher pageFetcher) {
 		this.config = config;
 		this.pageFetcher = pageFetcher;
+        this.host2directivesCache = new HashMap<String, HostDirectives>();
 	}
 
-	public boolean allows(WebURL webURL) {
-		if (!config.isEnabled()) {
-			return true;
-		}
-		try {
-			URL url = new URL(webURL.getURL());
-			String host = url.getHost().toLowerCase();
-			String path = url.getPath();
+    /**
+     * @param config
+     * @param pageFetcher
+     * @param host2directivesCache externally provided robots.txt cache
+     */
+    public RobotstxtServer(RobotstxtConfig config, PageFetcher pageFetcher, Map<String, HostDirectives> host2directivesCache) {
+        this.config = config;
+        this.pageFetcher = pageFetcher;
+        this.host2directivesCache = host2directivesCache;
+    }
 
-			HostDirectives directives = host2directivesCache.get(host);
+    /**
+     * For 'Crawl-delay' directives, calling this method will increment the time delay counter, regardless of whether
+     * or not a subsequent fetch of the given url actually happens. i.e. only call this method once per url being
+     * checked for fetch-ability.
+     *
+     * @param webURL
+     * @return suggested time delay in ms before fetching, or <code>null</code> if not allowed (i.e. wait an infinite
+     *         amount of time).
+     */
+    public Long allowedIn(WebURL webURL) {
+        if (!config.isEnabled()) {
+            return 0L;
+        }
+        try {
+            URL url = new URL(webURL.getURL());
+            String host = url.getHost().toLowerCase();
+            String path = url.getPath();
+
+            HostDirectives directives = host2directivesCache.get(host);
 
             if (directives != null && directives.needsRefetch()) {
                 synchronized (host2directivesCache) {
@@ -65,15 +89,15 @@ public class RobotstxtServer {
                 }
             }
 
-			if (directives == null) {
-				directives = fetchDirectives(host);
-			}
-			return directives.allows(path);
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		}
-		return true;
-	}
+            if (directives == null) {
+                directives = fetchDirectives(host);
+            }
+            return directives.allowedIn(path);
+        } catch (MalformedURLException e) {
+            logger.error(e);
+        }
+        return 0L;
+    }
 
 	private HostDirectives fetchDirectives(String host) {
 		WebURL robotsTxtUrl = new WebURL();
@@ -95,7 +119,7 @@ public class RobotstxtServer {
 						}
 						directives = RobotstxtParser.parse(content, config.getUserAgentName());
 					} catch (Exception e) {
-						e.printStackTrace();
+						logger.error(e);
 					}
 				}
 			}
